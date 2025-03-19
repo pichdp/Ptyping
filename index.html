@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Typing Speed Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        .container { max-width: 800px; margin: auto; }
+        .words { font-size: 24px; margin-bottom: 20px; display: flex; flex-wrap: wrap; justify-content: center; }
+        .word { margin: 5px; padding: 2px; font-size: 24px; }
+        .letter.correct { color: black; }
+        .letter.incorrect { color: red; }
+        input { width: 100%; padding: 10px; font-size: 18px; text-align: center; }
+        .stats { margin-top: 10px; }
+        button { padding: 10px 15px; font-size: 16px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Typing Speed Test</h1>
+        <div class="words" id="words"></div>
+        <input type="text" id="inputBox" placeholder="Start typing...">
+        <div class="stats">
+            <p>Time: <span id="time">60</span>s | WPM: <span id="wpm">0</span> | Accuracy: <span id="accuracy">100</span>% | Wrong Words: <span id="wrongWords">0</span></p>
+        </div>
+        <button onclick="restartTest()">Restart</button>
+    </div>
+    
+    <script>
+        const wordList = "apple banana orange cat dog sun moon star river tree cloud house mountain desk chair phone laptop pen book water sky".split(" ");
+        let wordsElement = document.getElementById("words");
+        let inputBox = document.getElementById("inputBox");
+        let timeElement = document.getElementById("time");
+        let wpmElement = document.getElementById("wpm");
+        let accuracyElement = document.getElementById("accuracy");
+        let wrongWordsElement = document.getElementById("wrongWords");
+        let timer, timeLeft = 60, correctWords = 0, totalWords = 0, wrongWords = 0, started = false;
+        let wordQueue = [];
+        let currentIndex = 0;
+        
+        function generateWords() {
+            wordQueue = [];
+            for (let i = 0; i < 200; i++) {
+                wordQueue.push(wordList[Math.floor(Math.random() * wordList.length)]);
+            }
+            updateDisplayedWords();
+        }
+        
+        function updateDisplayedWords() {
+            wordsElement.innerHTML = wordQueue.slice(currentIndex, currentIndex + 20).map(word => `<span class='word'>${word}</span>`).join(" ");
+        }
+        
+        function startTest() {
+            if (!started) {
+                started = true;
+                clearInterval(timer);
+                timeLeft = 60;
+                correctWords = 0;
+                totalWords = 0;
+                wrongWords = 0;
+                inputBox.value = "";
+                timeElement.innerText = timeLeft;
+                wpmElement.innerText = "0";
+                accuracyElement.innerText = "100";
+                wrongWordsElement.innerText = "0";
+                
+                timer = setInterval(() => {
+                    timeLeft--;
+                    timeElement.innerText = timeLeft;
+                    if (timeLeft <= 0) {
+                        clearInterval(timer);
+                        inputBox.disabled = true;
+                    }
+                }, 1000);
+            }
+        }
+        
+        inputBox.addEventListener("input", function () {
+            startTest();
+            let typedText = inputBox.value.trim();
+            let displayedWords = wordsElement.querySelectorAll(".word");
+            let fullText = wordQueue.slice(currentIndex, currentIndex + 20).join(" ");
+            
+            let highlightedText = "";
+            for (let i = 0; i < fullText.length; i++) {
+                if (typedText[i] === undefined) {
+                    highlightedText += `<span class='letter'>${fullText[i]}</span>`;
+                } else if (typedText[i] === fullText[i]) {
+                    highlightedText += `<span class='letter correct'>${fullText[i]}</span>`;
+                } else {
+                    highlightedText += `<span class='letter incorrect'>${fullText[i]}</span>`;
+                }
+            }
+            
+            wordsElement.innerHTML = highlightedText;
+            
+            if (typedText.endsWith(" ")) {
+                let typedWords = typedText.trim().split(" ");
+                let lastTypedWord = typedWords[typedWords.length - 1];
+                let correctWord = wordQueue[currentIndex];
+                
+                totalWords++;
+                if (lastTypedWord === correctWord) {
+                    correctWords++;
+                } else {
+                    wrongWords++;
+                }
+                
+                currentIndex++;
+                if (currentIndex % 10 === 0) {
+                    updateDisplayedWords();
+                }
+                inputBox.value = "";
+            }
+            
+            let wpm = Math.round((correctWords / (60 - timeLeft)) * 60);
+            let accuracy = totalWords > 0 ? Math.round((correctWords / totalWords) * 100) : 100;
+            
+            wpmElement.innerText = wpm > 0 ? wpm : "0";
+            accuracyElement.innerText = accuracy;
+            wrongWordsElement.innerText = wrongWords;
+        });
+        
+        function restartTest() {
+            started = false;
+            currentIndex = 0;
+            inputBox.disabled = false;
+            generateWords();
+            startTest();
+        }
+        
+        generateWords();
+    </script>
+</body>
+</html>
