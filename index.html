@@ -8,7 +8,7 @@
         body { font-family: Arial, sans-serif; text-align: center; }
         .container { max-width: 800px; margin: auto; }
         .words { font-size: 24px; margin-bottom: 20px; white-space: pre-wrap; text-align: center; }
-        .letter.correct { color: black; }
+        .letter.correct { color: green; }
         .letter.incorrect { color: red; }
         input { width: 100%; padding: 10px; font-size: 18px; text-align: center; }
         .stats { margin-top: 10px; }
@@ -43,11 +43,12 @@
             for (let i = 0; i < 200; i++) {
                 wordQueue.push(wordList[Math.floor(Math.random() * wordList.length)]);
             }
+            currentIndex = 0;
             updateDisplayedWords();
         }
         
         function updateDisplayedWords() {
-            wordsElement.innerText = wordQueue.slice(currentIndex, currentIndex + 20).join(" ");
+            wordsElement.innerHTML = wordQueue.slice(currentIndex, currentIndex + 20).map(word => `<span>${word}</span>`).join(" ");
         }
         
         function startTest() {
@@ -78,27 +79,24 @@
         
         inputBox.addEventListener("input", function () {
             startTest();
-            let typedText = inputBox.value.trim();
-            let displayedWords = wordQueue.slice(currentIndex, currentIndex + 20).join(" ");
+            let typedWords = inputBox.value.trim().split(" ");
+            let displayedWords = wordQueue.slice(currentIndex, currentIndex + 20);
             
-            let highlightedText = "";
-            for (let i = 0; i < displayedWords.length; i++) {
-                if (typedText[i] === undefined) {
-                    highlightedText += `<span class='letter'>${displayedWords[i]}</span>`;
-                } else if (typedText[i] === displayedWords[i]) {
-                    highlightedText += `<span class='letter correct'>${displayedWords[i]}</span>`;
+            let highlightedText = displayedWords.map((word, i) => {
+                if (typedWords[i] === undefined) {
+                    return `<span>${word}</span>`;
+                } else if (typedWords[i] === word) {
+                    return `<span class='letter correct'>${word}</span>`;
                 } else {
-                    highlightedText += `<span class='letter incorrect'>${displayedWords[i]}</span>`;
+                    return `<span class='letter incorrect'>${word}</span>`;
                 }
-            }
+            }).join(" ");
             
             wordsElement.innerHTML = highlightedText;
             
-            if (typedText.endsWith(" ")) {
-                let typedWords = typedText.trim().split(" ");
-                let lastTypedWord = typedWords[typedWords.length - 1];
+            if (inputBox.value.endsWith(" ")) {
+                let lastTypedWord = typedWords[typedWords.length - 2];
                 let correctWord = wordQueue[currentIndex];
-                
                 totalWords++;
                 if (lastTypedWord === correctWord) {
                     correctWords++;
@@ -123,10 +121,9 @@
         
         function restartTest() {
             started = false;
-            currentIndex = 0;
-            inputBox.disabled = false;
             generateWords();
-            startTest();
+            inputBox.disabled = false;
+            updateDisplayedWords();
         }
         
         generateWords();
