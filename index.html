@@ -7,8 +7,7 @@
     <style>
         body { font-family: Arial, sans-serif; text-align: center; }
         .container { max-width: 800px; margin: auto; }
-        .words { font-size: 24px; margin-bottom: 20px; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
-        .word { margin: 5px; padding: 2px; font-size: 24px; }
+        .words { font-size: 24px; margin-bottom: 20px; white-space: pre-wrap; text-align: center; }
         .letter.correct { color: black; }
         .letter.incorrect { color: red; }
         input { width: 100%; padding: 10px; font-size: 18px; text-align: center; }
@@ -48,7 +47,7 @@
         }
         
         function updateDisplayedWords() {
-            wordsElement.innerHTML = wordQueue.slice(currentIndex, currentIndex + 20).map(word => `<span class='word'>${word} </span>`).join(" ");
+            wordsElement.innerText = wordQueue.slice(currentIndex, currentIndex + 20).join(" ");
         }
         
         function startTest() {
@@ -60,6 +59,7 @@
                 totalWords = 0;
                 wrongWords = 0;
                 inputBox.value = "";
+                inputBox.disabled = false;
                 timeElement.innerText = timeLeft;
                 wpmElement.innerText = "0";
                 accuracyElement.innerText = "100";
@@ -79,17 +79,16 @@
         inputBox.addEventListener("input", function () {
             startTest();
             let typedText = inputBox.value.trim();
-            let displayedWords = wordsElement.querySelectorAll(".word");
-            let fullText = wordQueue.slice(currentIndex, currentIndex + 20).join(" ");
+            let displayedWords = wordQueue.slice(currentIndex, currentIndex + 20).join(" ");
             
             let highlightedText = "";
-            for (let i = 0; i < fullText.length; i++) {
+            for (let i = 0; i < displayedWords.length; i++) {
                 if (typedText[i] === undefined) {
-                    highlightedText += `<span class='letter'>${fullText[i]}</span>`;
-                } else if (typedText[i] === fullText[i]) {
-                    highlightedText += `<span class='letter correct'>${fullText[i]}</span>`;
+                    highlightedText += `<span class='letter'>${displayedWords[i]}</span>`;
+                } else if (typedText[i] === displayedWords[i]) {
+                    highlightedText += `<span class='letter correct'>${displayedWords[i]}</span>`;
                 } else {
-                    highlightedText += `<span class='letter incorrect'>${fullText[i]}</span>`;
+                    highlightedText += `<span class='letter incorrect'>${displayedWords[i]}</span>`;
                 }
             }
             
