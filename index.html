@@ -7,7 +7,7 @@
     <style>
         body { font-family: Arial, sans-serif; text-align: center; }
         .container { max-width: 800px; margin: auto; }
-        .words { font-size: 24px; margin-bottom: 20px; display: flex; flex-wrap: wrap; justify-content: center; }
+        .words { font-size: 24px; margin-bottom: 20px; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
         .word { margin: 5px; padding: 2px; font-size: 24px; }
         .letter.correct { color: black; }
         .letter.incorrect { color: red; }
@@ -48,7 +48,7 @@
         }
         
         function updateDisplayedWords() {
-            wordsElement.innerHTML = wordQueue.slice(currentIndex, currentIndex + 20).map(word => `<span class='word'>${word}</span>`).join(" ");
+            wordsElement.innerHTML = wordQueue.slice(currentIndex, currentIndex + 20).map(word => `<span class='word'>${word} </span>`).join(" ");
         }
         
         function startTest() {
