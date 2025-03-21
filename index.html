@@ -5,100 +5,100 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Typing Speed Test</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-        }
-        .word-container {
-            font-size: 24px;
-            margin-bottom: 20px;
-        }
-        .correct {
-            color: green;
-        }
-        .incorrect {
-            color: red;
-        }
-        input {
-            font-size: 18px;
-            padding: 5px;
-        }
+        body { font-family: Arial, sans-serif; text-align: center; }
+        #words { font-size: 24px; margin-bottom: 20px; }
+        #input { width: 80%; padding: 10px; font-size: 20px; }
+        .correct { color: green; }
+        .incorrect { color: red; }
     </style>
 </head>
 <body>
     <h1>Typing Speed Test</h1>
-    <div class="word-container" id="wordContainer"></div>
-    <input type="text" id="typingInput" autofocus>
-    <p id="stats">Time: 0s | WPM: 0 | Accuracy: 100% | Wrong Words: 0</p>
-    <button onclick="restartTest()">Restart</button>
+    <div id="words"></div>
+    <input type="text" id="input" oninput="startTyping()" autofocus>
+    <p id="stats">Time: 0s | WPM: 0 | Accuracy: 100% | Wrong Letters: 0</p>
+    <button onclick="restart()">Restart</button>
     
     <script>
-        let words = "apple banana orange laptop river mountain water desk cat dog sky cloud tree star sun phone pen chair book".split(" ");
-        let generatedWords = [];
-        let typedWords = [];
+        let wordList = "apple house banana cat sky dog sun phone tree chair book orange desk mountain cloud river water".split(" ");
+        let words = [];
         let currentIndex = 0;
         let startTime = null;
-        let correctCount = 0;
-        let wrongCount = 0;
-        let timerInterval;
-
+        let timerInterval = null;
+        let correctLetters = 0;
+        let wrongLetters = 0;
+        let inputField = document.getElementById("input");
+        let wordsDiv = document.getElementById("words");
+        let stats = document.getElementById("stats");
+        
         function generateWords() {
-            generatedWords = [];
-            for (let i = 0; i < 200; i++) {
-                generatedWords.push(words[Math.floor(Math.random() * words.length)]);
+            words = [];
+            while (words.length < 200) {
+                words.push(wordList[Math.floor(Math.random() * wordList.length)]);
             }
-            displayWords();
+            updateWordsDisplay();
         }
-
-        function displayWords() {
-            document.getElementById("wordContainer").innerHTML = generatedWords.slice(currentIndex, currentIndex + 20).join(" ");
+        
+        function updateWordsDisplay() {
+            let displayWords = words.slice(currentIndex, currentIndex + 20);
+            wordsDiv.innerHTML = displayWords.map((word, idx) => {
+                let chars = word.split('').map((char, charIdx) => {
+                    let typedChar = inputField.value[charIdx] || '';
+                    let className = typedChar === char ? 'correct' : typedChar ? 'incorrect' : '';
+                    return `<span class="${className}">${char}</span>`;
+                }).join('');
+                return `<span>${chars}</span>`;
+            }).join(' ');
         }
-
-        function startTimer() {
+        
+        function startTyping() {
             if (!startTime) {
-                startTime = new Date();
+                startTime = Date.now();
                 timerInterval = setInterval(updateStats, 1000);
             }
+            checkInput();
         }
-
-        function updateStats() {
-            let elapsedTime = (new Date() - startTime) / 1000;
-            let wpm = Math.round((correctCount / elapsedTime) * 60);
-            let accuracy = correctCount + wrongCount > 0 ? Math.round((correctCount / (correctCount + wrongCount)) * 100) : 100;
-            document.getElementById("stats").textContent = `Time: ${Math.round(elapsedTime)}s | WPM: ${wpm} | Accuracy: ${accuracy}% | Wrong Words: ${wrongCount}`;
-        }
-
-        document.getElementById("typingInput").addEventListener("input", function(event) {
-            startTimer();
-            let typed = event.target.value.trim();
-            let expected = generatedWords[currentIndex];
-            if (typed === expected) {
-                correctCount++;
-                typedWords.push(`<span class='correct'>${expected}</span>`);
-                event.target.value = "";
+        
+        function checkInput() {
+            let currentWord = words[currentIndex];
+            let typedWord = inputField.value;
+            
+            if (typedWord === currentWord + ' ') {
+                correctLetters += currentWord.length;
                 currentIndex++;
-                if (currentIndex % 10 === 0) {
-                    displayWords();
+                inputField.value = "";
+                if (currentIndex >= words.length) {
+                    finishTest();
                 }
-                if (currentIndex >= generatedWords.length) {
-                    clearInterval(timerInterval);
-                }
-            } else if (!expected.startsWith(typed)) {
-                wrongCount++;
+                updateWordsDisplay();
+            } else {
+                wrongLetters = typedWord.split('').reduce((count, char, idx) => count + (char !== (currentWord[idx] || '')), 0);
             }
-        });
-
-        function restartTest() {
-            startTime = null;
-            correctCount = 0;
-            wrongCount = 0;
-            currentIndex = 0;
-            document.getElementById("typingInput").value = "";
+        }
+        
+        function updateStats() {
+            let elapsedSeconds = (Date.now() - startTime) / 1000;
+            let wpm = Math.round((correctLetters / 5) / (elapsedSeconds / 60));
+            let accuracy = Math.max(0, Math.round((correctLetters / (correctLetters + wrongLetters)) * 100));
+            stats.innerHTML = `Time: ${Math.floor(elapsedSeconds)}s | WPM: ${wpm} | Accuracy: ${accuracy}% | Wrong Letters: ${wrongLetters}`;
+        }
+        
+        function finishTest() {
             clearInterval(timerInterval);
-            document.getElementById("stats").textContent = "Time: 0s | WPM: 0 | Accuracy: 100% | Wrong Words: 0";
+            updateStats();
+        }
+        
+        function restart() {
+            startTime = null;
+            clearInterval(timerInterval);
+            currentIndex = 0;
+            correctLetters = 0;
+            wrongLetters = 0;
+            inputField.value = "";
+            stats.innerHTML = "Time: 0s | WPM: 0 | Accuracy: 100% | Wrong Letters: 0";
             generateWords();
         }
-
+        
         generateWords();
     </script>
 </body>
