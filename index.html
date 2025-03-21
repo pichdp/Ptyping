@@ -5,128 +5,119 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Typing Speed Test</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-        }
-        .word-container {
-            font-size: 24px;
-            margin-bottom: 10px;
-        }
-        .word span.correct {
-            color: green;
-        }
-        .word span.incorrect {
-            color: red;
-        }
-        input {
-            font-size: 20px;
-            width: 80%;
-            padding: 5px;
-        }
+        body { font-family: Arial, sans-serif; text-align: center; }
+        .word-container { font-size: 24px; margin: 20px; }
+        .correct { color: green; }
+        .incorrect { color: red; }
+        input { font-size: 20px; padding: 5px; width: 60%; text-align: center; }
     </style>
 </head>
 <body>
     <h1>Typing Speed Test</h1>
-    <div class="word-container" id="wordContainer"></div>
-    <input type="text" id="typingInput" oninput="checkInput()" autofocus>
+    <div class="word-container" id="wordDisplay"></div>
+    <input type="text" id="inputBox" placeholder="Start typing..." autocomplete="off">
     <p id="stats">Time: 60s | WPM: 0 | Accuracy: 100% | Wrong Words: 0</p>
     <button onclick="restartTest()">Restart</button>
-    
+
     <script>
-        const words = ["apple", "banana", "cat", "dog", "sun", "moon", "river", "water", "sky", "cloud", "house", "tree", "phone", "desk", "star", "pen", "book", "orange", "mountain", "laptop"];
-        let testWords = [];
+        let words = [];
         let wordIndex = 0;
-        let charIndex = 0;
         let startTime = null;
-        let timerInterval;
+        let timerInterval = null;
+        let correctCount = 0;
+        let incorrectCount = 0;
         let timeLeft = 60;
-        let typedChars = 0;
-        let wrongChars = 0;
 
         function generateWords() {
-            testWords = [];
+            const wordList = ["apple", "banana", "orange", "dog", "cat", "house", "tree", "sky", "water", "phone", "desk", "book", "mountain", "cloud", "river", "pen", "chair", "star", "sun", "moon"];
+            words = [];
             for (let i = 0; i < 200; i++) {
-                testWords.push(words[Math.floor(Math.random() * words.length)]);
+                words.push(wordList[Math.floor(Math.random() * wordList.length)]);
             }
-            displayWords();
         }
 
         function displayWords() {
-            const wordContainer = document.getElementById("wordContainer");
-            wordContainer.innerHTML = testWords.slice(0, 20).map(word => `<span class="word">${word.split('').map(letter => `<span>${letter}</span>`).join('')}</span>`).join(' ');
-        }
-
-        function checkInput() {
-            const inputField = document.getElementById("typingInput");
-            if (!startTime) {
-                startTimer();
-            }
-
-            const typedWord = inputField.value;
-            const currentWord = testWords[wordIndex];
-            let wordSpans = document.querySelectorAll(".word")[0].children;
-            let isWrong = false;
-
-            for (let i = 0; i < currentWord.length; i++) {
-                if (typedWord[i] === undefined) {
-                    wordSpans[i].classList.remove("correct", "incorrect");
-                } else if (typedWord[i] === currentWord[i]) {
-                    wordSpans[i].classList.add("correct");
-                    wordSpans[i].classList.remove("incorrect");
-                } else {
-                    wordSpans[i].classList.add("incorrect");
-                    wordSpans[i].classList.remove("correct");
-                    isWrong = true;
-                }
-            }
-
-            if (typedWord.trim() === currentWord && !isWrong) {
-                wordIndex++;
-                inputField.value = "";
-                displayWords();
-            }
-
-            updateStats();
+            let display = words.slice(wordIndex, wordIndex + 20).map((word, i) => {
+                return `<span id="word${wordIndex + i}">${word}</span>`;
+            }).join(" ");
+            document.getElementById("wordDisplay").innerHTML = display;
         }
 
         function startTimer() {
-            startTime = Date.now();
-            timerInterval = setInterval(() => {
-                timeLeft--;
-                updateStats();
-                if (timeLeft <= 0) {
-                    endTest();
-                }
-            }, 1000);
+            if (!startTime) {
+                startTime = new Date().getTime();
+                timerInterval = setInterval(updateTimer, 1000);
+            }
         }
+
+        function updateTimer() {
+            timeLeft--;
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                document.getElementById("inputBox").disabled = true;
+                updateStats();
+            }
+            document.getElementById("stats").innerText = `Time: ${timeLeft}s | WPM: ${calculateWPM()} | Accuracy: ${calculateAccuracy()}% | Wrong Words: ${incorrectCount}`;
+        }
+
+        function calculateWPM() {
+            let elapsedMinutes = (60 - timeLeft) / 60;
+            return elapsedMinutes > 0 ? Math.round(correctCount / elapsedMinutes) : 0;
+        }
+
+        function calculateAccuracy() {
+            let totalWords = correctCount + incorrectCount;
+            return totalWords > 0 ? Math.round((correctCount / totalWords) * 100) : 100;
+        }
+
+        document.getElementById("inputBox").addEventListener("input", function (e) {
+            startTimer();
+            let typedWord = this.value.trim();
+            let currentWord = words[wordIndex];
+            let currentSpan = document.getElementById("word" + wordIndex);
+            
+            currentSpan.innerHTML = "";
+            for (let i = 0; i < currentWord.length; i++) {
+                let span = document.createElement("span");
+                span.innerText = currentWord[i];
+                if (i < typedWord.length) {
+                    span.style.color = typedWord[i] === currentWord[i] ? "green" : "red";
+                }
+                currentSpan.appendChild(span);
+            }
+            
+            if (typedWord === currentWord) {
+                correctCount++;
+                wordIndex++;
+                this.value = "";
+                displayWords();
+            } else if (currentWord.startsWith(typedWord)) {
+                // Continue typing normally
+            } else {
+                incorrectCount++;
+            }
+        });
 
         function updateStats() {
-            let elapsedTime = (60 - timeLeft) / 60;
-            let wpm = Math.round(wordIndex / elapsedTime) || 0;
-            let accuracy = Math.round(((typedChars - wrongChars) / typedChars) * 100) || 100;
-            document.getElementById("stats").innerText = `Time: ${timeLeft}s | WPM: ${wpm} | Accuracy: ${accuracy}% | Wrong Words: ${wrongChars}`;
-        }
-
-        function endTest() {
-            clearInterval(timerInterval);
-            document.getElementById("typingInput").disabled = true;
+            document.getElementById("stats").innerText = `Time: 0s | WPM: ${calculateWPM()} | Accuracy: ${calculateAccuracy()}% | Wrong Words: ${incorrectCount}`;
         }
 
         function restartTest() {
             wordIndex = 0;
-            charIndex = 0;
+            correctCount = 0;
+            incorrectCount = 0;
             startTime = null;
             timeLeft = 60;
-            typedChars = 0;
-            wrongChars = 0;
-            document.getElementById("typingInput").disabled = false;
-            document.getElementById("typingInput").value = "";
+            clearInterval(timerInterval);
+            document.getElementById("inputBox").disabled = false;
+            document.getElementById("inputBox").value = "";
             generateWords();
-            updateStats();
+            displayWords();
+            document.getElementById("stats").innerText = "Time: 60s | WPM: 0 | Accuracy: 100% | Wrong Words: 0";
         }
 
         generateWords();
+        displayWords();
     </script>
 </body>
 </html>
