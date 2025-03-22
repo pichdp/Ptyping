@@ -1,51 +1,69 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login & Register</title>
 </head>
 <body>
     <h2>Register</h2>
-    <input type="text" id="regUsername" placeholder="Username">
-    <input type="password" id="regPassword" placeholder="Password">
-    <input type="email" id="regEmail" placeholder="Email">
-    <button onclick="register()">Register</button>
-    
+    <input type="text" id="username" placeholder="Username">
+    <input type="password" id="password" placeholder="Password">
+    <input type="email" id="email" placeholder="Email">
+    <button id="registerBtn">Register</button>
+
     <h2>Login</h2>
     <input type="text" id="loginUsername" placeholder="Username">
     <input type="password" id="loginPassword" placeholder="Password">
-    <button onclick="login()">Login</button>
-    
-    <p id="message"></p>
+    <button id="loginBtn">Login</button>
 
     <script>
-        const scriptURL = "https://script.google.com/macros/s/AKfycbxXwjJoqNPgwDzh0v9APLvwD2dyHmOXCnaj0PS9VnuIa4BeTzKG-BB1J5BZhmxn4x20/exec"; // Replace with your actual URL
+        const API_URL = "https://script.google.com/macros/s/AKfycbwRrFoxzJOPkhbRFYVR7Eu2ldM7FarFWUiSVNo-pb5uG7WM7M3EzozeERA1f50v6U1N/exec";  // Replace with your Google Apps Script URL
 
-        function register() {
-            let username = document.getElementById("regUsername").value;
-            let password = document.getElementById("regPassword").value;
-            let email = document.getElementById("regEmail").value;
+        // Function to register a new user
+        async function registerUser() {
+            const username = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+            const email = document.getElementById("email").value;
 
-            fetch(scriptURL, {
+            if (!username || !password || !email) {
+                alert("Please fill in all fields.");
+                return;
+            }
+
+            const response = await fetch(API_URL, {
                 method: "POST",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ action: "register", username, password, email }),
-                headers: { "Content-Type": "application/json" }
-            })
-            .then(response => response.json())
-            .then(data => document.getElementById("message").innerText = data.message);
+            });
+
+            const data = await response.json();
+            alert(data.message);
         }
 
-        function login() {
-            let username = document.getElementById("loginUsername").value;
-            let password = document.getElementById("loginPassword").value;
+        // Function to login a user
+        async function loginUser() {
+            const username = document.getElementById("loginUsername").value;
+            const password = document.getElementById("loginPassword").value;
 
-            fetch(scriptURL, {
+            if (!username || !password) {
+                alert("Please enter your username and password.");
+                return;
+            }
+
+            const response = await fetch(API_URL, {
                 method: "POST",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ action: "login", username, password }),
-                headers: { "Content-Type": "application/json" }
-            })
-            .then(response => response.json())
-            .then(data => document.getElementById("message").innerText = data.message);
+            });
+
+            const data = await response.json();
+            alert(data.message);
         }
+
+        // Event Listeners
+        document.getElementById("registerBtn").addEventListener("click", registerUser);
+        document.getElementById("loginBtn").addEventListener("click", loginUser);
     </script>
 </body>
 </html>
